@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "1.2"
+#define PLUGIN_VERSION  "1.21"
 #define DEBUG           false
 
 #include <sourcemod>
@@ -98,7 +98,7 @@ public void PlayerQuit(Event hEvent, const char[] sEventName, bool bDontBroadcas
 
     int client = GetClientOfUserId(hEvent.GetInt("userid"));
 
-    if (client > 0 && client <= MaxClients && !IsFakeClient(client))
+    if (client > 0 && client <= MaxClients)
         return;
 
     char clientAuth[32];
@@ -119,6 +119,9 @@ public void Event_VehicleLeave(Event hEvent, const char[] sEventName, bool bDont
         {
             int client = GetClientOfUserId(hEvent.GetInt("userid"));
 
+            if (client > 0 && client <= MaxClients && !IsFakeClient(client))
+                return;
+
             if (hCvar_finallines.IntValue > 0)
                 CPrintToChat(client, "%t", "FinalMsg1");
 
@@ -133,6 +136,9 @@ public void Event_VersusFinished(Event hEvent, const char[] sEventName, bool bDo
     if(hCvar_finalmsg.BoolValue)
     {   // All this unecessary if aren't printing a final message.
         int client = GetClientOfUserId(hEvent.GetInt("userid"));
+
+        if (client > 0 && client <= MaxClients && !IsFakeClient(client))
+            return;
 
         if (hCvar_finallines.IntValue > 0)
             CPrintToChat(client, "%t", "FinalMsg1");
