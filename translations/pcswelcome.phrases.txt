@@ -7,10 +7,20 @@
         "en"     "{default}Welcome to {olive}Public Community Servers{default}, a {green}Vanilla{default}-gameplay server."
 		"es"		"{default}Bienvenido a {olive}Public Community Servers{default}, un servidor de {green}Vanilla{default}."
 	}
-	
 	"WelcomeMsg2"
 	{
 		"en"		"{green}Steamgroup{default}: https://steamcommunity.com/groups/publ4d2"
 		"es"		"{green}Grupo{default}: https://steamcommunity.com/groups/publ4d2"
 	}
+	"FinalMsg1"
+	{
+        "en"     "Thank you for playing on {olive}Public Community Servers{default}."
+		"es"		"Gracias por jugar en {olive}Public Community Servers{default}."
+	}
+	"FinalMsg2"
+	{
+		"en"		"{green}Steamgroup{default}: https://steamcommunity.com/groups/publ4d2"
+		"es"		"{green}Grupo{default}: https://steamcommunity.com/groups/publ4d2"
+	}
+
 }
