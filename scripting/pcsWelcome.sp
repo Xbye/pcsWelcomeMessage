@@ -1,13 +1,13 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "1.0"
+#define PLUGIN_VERSION  "1.1"
 #define DEBUG           false
 
 #include <sourcemod>
 #include <colors>
 
-bool bIsWelcomed[MAXPLAYERS + 1]; // + 1 to account for SourceTV
+ArrayList a_FullyLoadedPlayers;
 
 ConVar hCvar_everymap;
 ConVar hCvar_lines;
@@ -33,6 +33,8 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    a_FullyLoadedPlayers = new ArrayList(64);
+
     hCvar_everymap = 		CreateConVar("pcs_everymap", "1", "Print The Welcome Message Every Map? Otherwise, print only once on connection.", _, true, 0.0, true, 1.0);
     hCvar_lines    =        CreateConVar("pcs_lines", "2", "Print this many lines of text for the welcome message.", _, true, 0.0, true, 2.0);
 
@@ -46,41 +48,51 @@ public void OnPluginStart()
 
 public void Event_PlayerTeam(Event hEvent, const char[] eventName, bool dontBroadcast)
 {
-    int team = hEvent.GetInt("team");
+    int oldteam = hEvent.GetInt("oldteam");
     int client = GetClientOfUserId(hEvent.GetInt("userid"));
 
-    if (client > 0 && client <= MaxClients && !IsFakeClient(client))
+    if (client > 0 && client <= MaxClients && !IsFakeClient(client) && oldteam == 0)
     {
         #if DEBUG
-            int oldteam = hEvent.GetInt("oldteam");
+            int team = hEvent.GetInt("team");
             PrintToServer("-----[%f] Fired player_team event for %N -- team: %i -- oldteam: %i", GetGameTime(), client, team, oldteam);
             //PrintToChatAll("-----[[%f] Fired player_team event for %N -- team: %i -- oldteam: %i", GetGameTime(), client, team, oldteam);
         #endif
 
-        if(bIsWelcomed[client])
+        char clientAuth[32];
+        if (!GetClientAuthId(client, AuthId_SteamID64, clientAuth, sizeof(clientAuth)))
             return;
+    
+        bool clientWasConnected = FindStringInArray(a_FullyLoadedPlayers, clientAuth) != -1 ? true : false;
 
-        // Don't cover people loading in, or spectators
-        if (team < 2)
-            return;
-        
-        if (hCvar_lines.IntValue > 0)
-            CPrintToChat(client, "%t", "WelcomeMsg1");
+        if (!clientWasConnected)
+        {
+            if (hCvar_lines.IntValue > 0)
+                CPrintToChat(client, "%t", "WelcomeMsg1");
 
-        if (hCvar_lines.IntValue > 1)
-            CPrintToChat(client, "%t", "WelcomeMsg2");
-
+            if (hCvar_lines.IntValue > 1)
+                CPrintToChat(client, "%t", "WelcomeMsg2");
+            
+            a_FullyLoadedPlayers.PushString(clientAuth);
+        }
     }
 }
 
 public void PlayerQuit(Event hEvent, const char[] sEventName, bool bDontBroadcast)
 {
-    int clientID = GetClientOfUserId(hEvent.GetInt("userid"));
+    bool isBot = hEvent.GetBool("bot");
 
-    if (clientID <= 0 || clientID > MaxClients)
+    if (isBot)
         return;
 
-    bIsWelcomed[clientID] = false;
+    char clientAuth[32];
+    if (!GetClientAuthId(GetClientOfUserId(hEvent.GetInt("userid")), AuthId_SteamID64, clientAuth, sizeof(clientAuth)))
+        return;
+
+    int index = FindStringInArray(a_FullyLoadedPlayers, clientAuth);
+    
+    if (index != -1)
+        a_FullyLoadedPlayers.Erase(index);
 }
 
 
@@ -88,9 +100,6 @@ public void OnMapEnd()
 {
     if(hCvar_everymap.BoolValue)
     {
-        for( int i = 0; i < MaxClients; i++ )
-        {
-            bIsWelcomed[i] = false;
-        }       
+        a_FullyLoadedPlayers.Clear();
     }
 }
