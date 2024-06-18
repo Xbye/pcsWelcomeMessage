@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION  "1.22"
+#define PLUGIN_VERSION  "1.23"
 #define DEBUG           false
 
 #include <sourcemod>
@@ -9,10 +9,11 @@
 
 ArrayList a_FullyLoadedPlayers;
 
-ConVar hCvar_everymap;
-ConVar hCvar_lines;
-ConVar hCvar_finalmsg;
-ConVar hCvar_finallines;
+ConVar 
+    hCvar_everymap,
+    hCvar_lines,
+    hCvar_finalmsg,
+    hCvar_finallines;
 
 bool bVersusMode;
 
@@ -32,7 +33,7 @@ public Plugin myinfo =
     author =        "Xbye (SirPlease, Nolo001)",
     description =   "Displays the community welcome message.",
     version =       PLUGIN_VERSION,
-    //url =         "URL"
+    url         =   "https://forums.alliedmods.net/showthread.php?p=2824179"
 };
 
 public void OnPluginStart()
@@ -47,7 +48,7 @@ public void OnPluginStart()
     hCvar_finallines    =       CreateConVar("pcs_lines_final", "2", "Print The Welcome Message Every Map? Otherwise, print only once on connection.", _, true, 0.0, true, 2.0);
 
     HookEvent("player_team", Event_PlayerTeam);
-    HookEvent("player_disconnect", PlayerQuit);
+    HookEvent("player_disconnect", Event_PlayerQuit);
 
     HookEvent("versus_match_finished", Event_VersusFinished);
     HookEvent("finale_vehicle_leaving", Event_VehicleLeave);
@@ -89,23 +90,12 @@ public void Event_PlayerTeam(Event hEvent, const char[] eventName, bool dontBroa
     }
 }
 
-public void PlayerQuit(Event hEvent, const char[] sEventName, bool bDontBroadcast)
+public void Event_PlayerQuit(Event hEvent, const char[] sEventName, bool bDontBroadcast)
 {
-    bool isBot = hEvent.GetBool("bot");
+    char steamId[32];
+    hEvent.GetString("networkid", steamId, sizeof(steamId));
 
-    if (isBot)
-        return;
-
-    int client = GetClientOfUserId(hEvent.GetInt("userid"));
-
-    if (client > 0 && client <= MaxClients)
-        return;
-
-    char clientAuth[32];
-    if (!GetClientAuthId(client, AuthId_SteamID64, clientAuth, sizeof(clientAuth)))
-        return;
-
-    int index = FindStringInArray(a_FullyLoadedPlayers, clientAuth);
+    int index = FindStringInArray(a_FullyLoadedPlayers, steamId);
     
     if (index != -1)
         a_FullyLoadedPlayers.Erase(index);
